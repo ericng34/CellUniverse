@@ -11,10 +11,6 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from skimage import io
-from matplotlib import pyplot as plt
-
-
-# TODO: get tif files to work
 
 # Helper functions
 def load_image(image_file: Path):

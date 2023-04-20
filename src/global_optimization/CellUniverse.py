@@ -8,6 +8,7 @@ from .Cells import CellFactory
 from .Config import load_config, BaseConfig
 from .Lineage import Lineage
 from .Args import Args
+from skimage import io
 
 
 # Helper functions
@@ -18,9 +19,17 @@ def get_image_file_paths(input_pattern: str, first_frame: int, last_frame: int, 
     try:
         while last_frame == -1 or i <= last_frame:
             file = Path(input_pattern % i)
-                
+            
             if file.exists() and file.is_file():
                 image_paths.append(file)
+
+                # setup some configurations automatically if they are tif files
+                if file.suffix in ['.tif', '.tiff']:
+                    img = io.imread(file)
+                    slices = img.shape[0]
+
+                    config.simulation.z_slices = slices
+                    config.simulation.z_values = [i - slices // 2 for i in range(slices)]
             else:
                 raise ValueError(f'Input file not found "{file}"')
             i += 1
@@ -54,6 +63,7 @@ class CellUniverse:
         # Config
         # --------
         config = load_config(args.config)
+        image_file_paths = get_image_file_paths(args.input, args.first_frame, args.last_frame, config)
 
         # --------
         # Cells
@@ -64,7 +74,6 @@ class CellUniverse:
         # --------
         # Lineage
         # --------
-        image_file_paths = get_image_file_paths(args.input, args.first_frame, args.last_frame, config)
         self.lineage = Lineage(cells, image_file_paths, config, args.output, args.continue_from)
 
     def run(self):
