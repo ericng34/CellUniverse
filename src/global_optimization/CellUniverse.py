@@ -13,27 +13,23 @@ from .Args import Args
 # Helper functions
 def get_image_file_paths(input_pattern: str, first_frame: int, last_frame: int, config: BaseConfig):
     """Gets the list of images that are to be analyzed."""
-    z_slices = config.simulation.z_slices
-    image_path_stack: List[List[Path]] = []
+    image_paths: List[Path] = []
     i = first_frame
     try:
         while last_frame == -1 or i <= last_frame:
-            input_file_stack = []
-            for z in range(z_slices):
-                if z_slices == 1:
-                    file = Path(input_pattern % i)
-                else:
-                    file = Path(input_pattern % (i, z))
-                if file.exists() and file.is_file():
-                    input_file_stack.append(file)
-                else:
-                    raise ValueError(f'Input file not found "{file}"')
+            file = Path(input_pattern % i)
+                
+            if file.exists() and file.is_file():
+                image_paths.append(file)
+            else:
+                raise ValueError(f'Input file not found "{file}"')
             i += 1
-            image_path_stack.append(input_file_stack)
+
     except ValueError as e:
-        if last_frame != -1 and len(image_path_stack) != last_frame - first_frame + 1:
+        if last_frame != -1 and len(image_paths) != last_frame - first_frame + 1:
             raise e
-    return image_path_stack
+
+    return image_paths
 
 
 class CellUniverse:
@@ -65,7 +61,6 @@ class CellUniverse:
         cellFactory = CellFactory(config)
         cells = cellFactory.create_cells(args.initial, z_offset = config.simulation.z_slices // 2, z_scaling = config.simulation.z_scaling)
 
-
         # --------
         # Lineage
         # --------
@@ -74,8 +69,8 @@ class CellUniverse:
 
     def run(self):
         current_time = time.time()
-        for i in range(100):
-            self.lineage.perturb(0)
+        # for i in range(100):
+        #     self.lineage.perturb(0)
 
         self.lineage.save_images(0)
         self.lineage.save_cells(0)
