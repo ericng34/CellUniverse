@@ -70,7 +70,7 @@ class Lineage:
     def optimize(self, frame_index: int):
         """Perturb the cells in the frame."""
         frame = self.frames[frame_index]
-        algorithm = 'simulated annealing'
+        algorithm = 'gradient descent'
         total_iterations = len(frame) * self.config.simulation.iterations_per_cell
 
         for i in range(total_iterations):
@@ -78,6 +78,7 @@ class Lineage:
                 print(f"Frame {frame_index}, iteration {i}")
 
             if algorithm == 'simulated annealing':
+                logger.info("using simulated annealing...")
                 cost_diff, accept = frame.perturb()
                 acceptance = np.exp(-cost_diff / ((i + 1) / total_iterations))
                 accept(acceptance > np.random.random_sample())
@@ -85,6 +86,7 @@ class Lineage:
                 frame.gradient_descent()
             else:
                 # Hill climbing
+                logger.info("using hill climbing...")
                 cost_diff, accept = frame.perturb()
                 accept(cost_diff < 0)
 

@@ -10,7 +10,7 @@ related functions.
 from __future__ import annotations
 from pydantic import BaseModel
 from abc import ABC, abstractmethod
-from typing import TypeVar, Type
+from typing import TypeVar, Type, DefaultDict
 import random
 
 class CellParams(BaseModel, ABC):
@@ -52,7 +52,7 @@ class Cell(ABC):
         pass
 
     @abstractmethod
-    def get_perturbed_cell(self) -> Cell:
+    def get_perturbed_cell(self, params: DefaultDict[str, float] = None) -> Cell:
         pass
 
     @abstractmethod

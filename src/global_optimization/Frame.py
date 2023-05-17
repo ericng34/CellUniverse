@@ -1,10 +1,18 @@
 from pathlib import Path
-from typing import Dict, Optional, List, Generic
+from typing import Dict, Optional, List, Generic, Tuple
 import numpy.typing as npt
 import numpy as np
 import pandas as pd
 from PIL import Image
 import random
+
+from copy import deepcopy
+from collections import defaultdict
+
+# REMOVE LATER
+from loguru import logger
+import matplotlib.pyplot as plt
+
 
 
 from .Cells import Cell
@@ -124,5 +132,61 @@ class Frame:
 
         return old_cost - new_cost, callback
 
+
     def gradient_descent(self):
-        pass
+        
+        logger.info("running gradient descent...")
+
+        directions = defaultdict(dict)
+
+        # hyper parameters to tune for gradient descent
+        moving_delta = 1
+        delta = 1e-3
+        alpha = 0.1
+
+        cell_list = self.cells
+        orig_cost = self.calculate_cost(self.synth_image_stack)
+        
+        # display loss before gradient descent
+        logger.info(f"cost before one iteration of gradient descent: {orig_cost}")
+
+        # calculate gradient for each cell
+        for index, cell in enumerate(cell_list):
+            # iterate through each cell and calculate the gradient
+            old_cell = deepcopy(cell)
+            # keep old cell params
+            params = cell.get_cell_params().__dict__
+            param_gradients = {}
+
+            # get gradients for x, y, z, radius
+            for param, val in params.items():
+                if param == 'name': # or param == 'radius':
+                    continue
+                
+                # setup parameters to test perterb of size delta
+                perterb_param = defaultdict(float)
+                perterb_param[param] = moving_delta
+                # perterb cell
+                self.cells[index] = self.cells[index].get_perturbed_cell(perterb_param)
+
+                # generate new image stack
+                new_synth_image_stack = self.generate_synth_images()
+                # get new cost
+                new_cost = self.calculate_cost(new_synth_image_stack)
+                # calculate gradient direction for param
+                param_gradients[param] = (new_cost - orig_cost) / delta
+                # reset cell
+                self.cells[index] = old_cell
+
+            # calculate direction to move towards for gradient descent
+            for param, gradient in param_gradients.items():
+                directions[index][param] = -1 * alpha * gradient
+            
+        
+        for index, cell in enumerate(cell_list):
+            self.cells[index] = self.cells[index].get_perturbed_cell(directions[index])
+        
+        self.synth_image_stack = self.generate_synth_images()
+        new_cost = self.calculate_cost(self.synth_image_stack)
+
+        logger.info(f"cost after one iteration of gradient descent: {new_cost}")
