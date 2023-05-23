@@ -177,3 +177,5 @@ class Frame:
         
         self.synth_image_stack = self.generate_synth_images()
         new_cost = self.calculate_cost(self.synth_image_stack)
+
+        print(f"current cost: {new_cost}")

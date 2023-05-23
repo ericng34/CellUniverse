@@ -82,6 +82,7 @@ class Lineage:
                 acceptance = np.exp(-cost_diff / ((i + 1) / total_iterations))
                 accept(acceptance > np.random.random_sample())
             elif algorithm == 'gradient descent':
+                print(f"Current iteration: {i + 1}")
                 frame.gradient_descent()
             else:
                 # Hill climbing
