@@ -148,24 +148,24 @@ class Sphere(Cell):
         #     width, length,
         #     rotation, "combined alpha unknown", (self._opacity + cell.opacity)/2)
 
-    def get_perturbed_cell(self, params: DefaultDict[str, float]):
+    def get_perturbed_cell(self):
+        return Sphere(SphereParams(
+            name=self._name,
+            x=self._position.x + Sphere.cellConfig.x.get_perturb_offset(),
+            y=self._position.y + Sphere.cellConfig.y.get_perturb_offset(),
+            z=self._position.z + Sphere.cellConfig.z.get_perturb_offset(),
+            radius=self._radius + Sphere.cellConfig.radius.get_perturb_offset(),
+        ))
+    
+    def get_paramaterized_cell(self, params: DefaultDict[str, float]):
         # if no params, default to using perterb from files (used during simulated annealing)
-        if not params:
-            return Sphere(SphereParams(
-                name=self._name,
-                x=self._position.x + Sphere.cellConfig.x.get_perturb_offset(),
-                y=self._position.y + Sphere.cellConfig.y.get_perturb_offset(),
-                z=self._position.z + Sphere.cellConfig.z.get_perturb_offset(),
-                radius=self._radius + Sphere.cellConfig.radius.get_perturb_offset(),
-            ))
-        else:
-            return Sphere(SphereParams(
-                name=self._name,
-                x=self._position.x + params['x'],
-                y=self._position.y + params['y'],
-                z=self._position.z + params['z'],
-                radius=min(max(Sphere.cellConfig.minRadius, self._radius + params['radius']), Sphere.cellConfig.maxRadius),
-            ))
+        return Sphere(SphereParams(
+            name=self._name,
+            x=self._position.x + params['x'],
+            y=self._position.y + params['y'],
+            z=self._position.z + params['z'],
+            radius=min(max(Sphere.cellConfig.minRadius, self._radius + params['radius']), Sphere.cellConfig.maxRadius),
+        ))
 
     def get_radius_at(self, z: float):
         """Returns the radius of the sphere at a given z value."""

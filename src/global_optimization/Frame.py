@@ -9,12 +9,6 @@ import random
 from copy import deepcopy
 from collections import defaultdict
 
-# REMOVE LATER
-from loguru import logger
-import matplotlib.pyplot as plt
-
-
-
 from .Cells import Cell
 from .Config import SimulationConfig
 
@@ -134,8 +128,6 @@ class Frame:
 
 
     def gradient_descent(self):
-        
-        logger.info("running gradient descent...")
 
         directions = defaultdict(dict)
 
@@ -146,9 +138,6 @@ class Frame:
 
         cell_list = self.cells
         orig_cost = self.calculate_cost(self.synth_image_stack)
-        
-        # display loss before gradient descent
-        logger.info(f"cost before one iteration of gradient descent: {orig_cost}")
 
         # calculate gradient for each cell
         for index, cell in enumerate(cell_list):
@@ -167,7 +156,7 @@ class Frame:
                 perterb_param = defaultdict(float)
                 perterb_param[param] = moving_delta
                 # perterb cell
-                self.cells[index] = self.cells[index].get_perturbed_cell(perterb_param)
+                self.cells[index] = self.cells[index].get_paramaterized_cell(perterb_param)
 
                 # generate new image stack
                 new_synth_image_stack = self.generate_synth_images()
@@ -184,9 +173,7 @@ class Frame:
             
         
         for index, cell in enumerate(cell_list):
-            self.cells[index] = self.cells[index].get_perturbed_cell(directions[index])
+            self.cells[index] = self.cells[index].get_paramaterized_cell(directions[index])
         
         self.synth_image_stack = self.generate_synth_images()
         new_cost = self.calculate_cost(self.synth_image_stack)
-
-        logger.info(f"cost after one iteration of gradient descent: {new_cost}")

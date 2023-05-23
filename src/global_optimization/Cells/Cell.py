@@ -52,7 +52,11 @@ class Cell(ABC):
         pass
 
     @abstractmethod
-    def get_perturbed_cell(self, params: DefaultDict[str, float] = None) -> Cell:
+    def get_perturbed_cell(self) -> Cell:
+        pass
+    
+    @abstractmethod
+    def get_paramaterized_cell(self, params: DefaultDict[str, float] = None) -> Cell:
         pass
 
     @abstractmethod

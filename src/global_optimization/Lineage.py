@@ -78,7 +78,6 @@ class Lineage:
                 print(f"Frame {frame_index}, iteration {i}")
 
             if algorithm == 'simulated annealing':
-                logger.info("using simulated annealing...")
                 cost_diff, accept = frame.perturb()
                 acceptance = np.exp(-cost_diff / ((i + 1) / total_iterations))
                 accept(acceptance > np.random.random_sample())
@@ -86,7 +85,6 @@ class Lineage:
                 frame.gradient_descent()
             else:
                 # Hill climbing
-                logger.info("using hill climbing...")
                 cost_diff, accept = frame.perturb()
                 accept(cost_diff < 0)
 
