@@ -204,7 +204,7 @@ class Frame:
                 self.cells[index] = self.cells[index].get_paramaterized_cell(perterb_param)
 
                 # generate new image stack
-                new_synth_image_stack = self.generate_synth_images()
+                new_synth_image_stack = self.generate_synth_images_fast(old_cell, self.cells[index])
                 # get new cost
                 new_cost = self.calculate_cost(new_synth_image_stack)
                 # calculate gradient direction for param
