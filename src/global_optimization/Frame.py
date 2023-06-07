@@ -171,7 +171,25 @@ class Frame:
 
         return old_cost - new_cost, callback
 
+    def _cost_of_perterb(self, perterb_param: str, perterb_val: str, index: int, old_cell: Cell):
+        # setup parameters to test perterb of size delta
+        perterb_params = defaultdict(float)
+        perterb_params[perterb_param] = perterb_val
+        # perterb cell
+        self.cells[index] = self.cells[index].get_paramaterized_cell(perterb_params)
 
+        # generate new image stack
+        new_synth_image_stack = self.generate_synth_images_fast(old_cell, self.cells[index])
+        # get new cost
+        new_cost = self.calculate_cost(new_synth_image_stack)
+
+        # reset cell
+        self.cells[index] = old_cell
+
+        return new_cost
+
+    # add a line search to figure out how much to move in the gradient direction
+    # add a threshold so that stops calculating gradient when it converges
     def gradient_descent(self):
 
         directions = defaultdict(dict)
@@ -184,6 +202,8 @@ class Frame:
         cell_list = self.cells
         orig_cost = self.calculate_cost(self.synth_image_stack)
 
+        print(f"original cost: {orig_cost}")
+
         # calculate gradient for each cell
         for index, cell in enumerate(cell_list):
             # iterate through each cell and calculate the gradient
@@ -192,31 +212,56 @@ class Frame:
             params = cell.get_cell_params().__dict__
             param_gradients = {}
 
+
             # get gradients for x, y, z, radius
             for param, val in params.items():
-                if param == 'name': # or param == 'radius':
+                if param == 'name':
                     continue
                 
-                # setup parameters to test perterb of size delta
-                perterb_param = defaultdict(float)
-                perterb_param[param] = moving_delta
-                # perterb cell
-                self.cells[index] = self.cells[index].get_paramaterized_cell(perterb_param)
+                new_cost = self._cost_of_perterb(param, moving_delta, index, old_cell)
 
-                # generate new image stack
-                new_synth_image_stack = self.generate_synth_images_fast(old_cell, self.cells[index])
-                # get new cost
-                new_cost = self.calculate_cost(new_synth_image_stack)
-                # calculate gradient direction for param
                 param_gradients[param] = (new_cost - orig_cost) / delta
-                # reset cell
-                self.cells[index] = old_cell
 
             # calculate direction to move towards for gradient descent
             for param, gradient in param_gradients.items():
-                directions[index][param] = -1 * alpha * gradient
+                tolerance = 1e-3
+                direction = -1 * alpha
+                # line search to find the optimal amount to move
+                lower = gradient * direction
+                upper = 2 * lower
+                lower_cost = self._cost_of_perterb(param, lower, index, old_cell)
+                upper_cost = self._cost_of_perterb(param, upper, index, old_cell)
+                # assume that the lower bound gradient is the best cost until new minima found
+                #print(f"beginning cost: {lower_cost}")
+                best_cost = lower_cost
+                old_upper_cost = 0
+
+                # keep on finding the upper limit of line search until cost is negative
+                while upper_cost < best_cost and (upper_cost - old_upper_cost) > tolerance:
+                    upper = 2 * upper
+                    old_upper_cost = upper_cost
+                    upper_cost = self._cost_of_perterb(param, upper, index, old_cell)
+                    #print(f"finding upper {upper} cost: {upper_cost}")
+                
+                mid = None
+                # try to find minimal cost by looking at the lower and upper cost
+                while True:
+                    mid = (lower + upper) / 2
+                    mid_cost = self._cost_of_perterb(param, mid, index, old_cell)
+
+                    if abs(mid_cost - best_cost) < tolerance:
+                        break
+                    
+                    if mid_cost < lower_cost:
+                        lower = mid
+                        lower_cost = mid_cost
+                        best_cost = mid_cost
+
+                    elif mid_cost > lower_cost:
+                        upper = mid
+                    
+                directions[index][param] = mid
             
-        
         for index, cell in enumerate(cell_list):
             self.cells[index] = self.cells[index].get_paramaterized_cell(directions[index])
         
@@ -224,3 +269,4 @@ class Frame:
         new_cost = self.calculate_cost(self.synth_image_stack)
 
         print(f"current cost: {new_cost}")
+        return new_cost

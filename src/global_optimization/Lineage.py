@@ -73,6 +73,10 @@ class Lineage:
         algorithm = 'gradient descent'
         total_iterations = len(frame) * self.config.simulation.iterations_per_cell
 
+        # add tolerance (do not need to calculate gradient descent if minima is reaced)
+        tolerance = 0.1
+        minima_reached = False
+
         for i in range(total_iterations):
             if i % 100 == 0:
                 print(f"Frame {frame_index}, iteration {i}")
@@ -83,7 +87,15 @@ class Lineage:
                 accept(acceptance > np.random.random_sample())
             elif algorithm == 'gradient descent':
                 print(f"Current iteration: {i + 1}")
-                frame.gradient_descent()
+                if minima_reached:
+                    continue
+                    
+                cur_cost = frame.calculate_cost(frame.synth_image_stack)
+                new_cost = frame.gradient_descent()
+
+                if (cur_cost - new_cost) < tolerance:
+                    minima_reached = True
+
             else:
                 # Hill climbing
                 cost_diff, accept = frame.perturb()
