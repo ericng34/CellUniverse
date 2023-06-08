@@ -88,9 +88,9 @@ class Frame:
         # min_corner, max_corner = Frame.calculate_minimum_box(old_cell, new_cell)
 
         for i, z in enumerate(self.z_slices):
-            # if (z < min_corner[2] or z > max_corner[2]):
-            #     synth_image_stack.append(self.synth_image_stack[i])
-            #     continue
+            if (z < min_corner[2] or z > max_corner[2]):
+                synth_image_stack.append(self.synth_image_stack[i])
+                continue
             synth_image = np.full(shape, self.simulation_config.background_color)
             for cell in self.cells:
                 cell.draw(synth_image, self.simulation_config, z = z)
@@ -257,50 +257,54 @@ class Frame:
 
         cells_grad = (np.array(cells_grad) - orig_cost) / delta
 
+        # use this direction value if no line search
         directions = {index:dict(zip(param_names, -1 * alpha * cells_grad[index])) for index, grad in enumerate(cells_grad)}
         
         # find optimal distance to move for each perterb using line search
-        # for index, cell in enumerate(cell_list):
+        # TODO: if using line search try to find best tolerance and upper bound
+        '''
+        for index, cell in enumerate(cell_list):
             
-        #     param_gradients = dict(zip(param_names, cells_grad[index]))
-        #     old_cell = deepcopy(cell)
+            param_gradients = dict(zip(param_names, cells_grad[index]))
+            old_cell = deepcopy(cell)
 
-        #     for param, gradient in param_gradients.items():
-        #         tolerance = 1e-3
-        #         direction = -1 * alpha
-        #         # line search to find the optimal amount to move
-        #         lower = gradient * direction
-        #         upper = 2 * lower
-        #         lower_cost = self._cost_of_perterb(param, lower, index, old_cell)
-        #         upper_cost = self._cost_of_perterb(param, upper, index, old_cell)
-        #         # assume that the lower bound gradient is the best cost until new minima found
-        #         best_cost = lower_cost
-        #         old_upper_cost = 0
+            for param, gradient in param_gradients.items():
+                tolerance = 1e-2
+                direction = -1 * alpha
+                # line search to find the optimal amount to move
+                lower = gradient * direction
+                upper = 3 * lower
+                lower_cost = self._cost_of_perterb(param, lower, index, old_cell)
+                upper_cost = self._cost_of_perterb(param, upper, index, old_cell)
+                # assume that the lower bound gradient is the best cost until new minima found
+                best_cost = lower_cost
+                old_upper_cost = 0
 
-        #         # keep on finding the upper limit of line search until cost is negative
-        #         while upper_cost < best_cost and (upper_cost - old_upper_cost) > tolerance:
-        #             upper = 2 * upper
-        #             old_upper_cost = upper_cost
-        #             upper_cost = self._cost_of_perterb(param, upper, index, old_cell)
+                # keep on finding the upper limit of line search until cost is negative
+                while upper_cost < best_cost and (upper_cost - old_upper_cost) > tolerance:
+                    upper = 3 * upper
+                    old_upper_cost = upper_cost
+                    upper_cost = self._cost_of_perterb(param, upper, index, old_cell)
                 
-        #         mid = None
-        #         # try to find minimal cost by looking at the lower and upper cost
-        #         while True:
-        #             mid = (lower + upper) / 2
-        #             mid_cost = self._cost_of_perterb(param, mid, index, old_cell)
+                mid = None
+                # try to find minimal cost by looking at the lower and upper cost
+                while True:
+                    mid = (lower + upper) / 2
+                    mid_cost = self._cost_of_perterb(param, mid, index, old_cell)
 
-        #             if abs(mid_cost - best_cost) < tolerance:
-        #                 break
+                    if abs(mid_cost - best_cost) < tolerance:
+                        break
                     
-        #             if mid_cost < lower_cost:
-        #                 lower = mid
-        #                 lower_cost = mid_cost
-        #                 best_cost = mid_cost
+                    if mid_cost < lower_cost:
+                        lower = mid
+                        lower_cost = mid_cost
+                        best_cost = mid_cost
 
-        #             elif mid_cost > lower_cost:
-        #                 upper = mid
+                    elif mid_cost > lower_cost:
+                        upper = mid
                     
-        #         directions[index][param] = mid
+                directions[index][param] = mid
+        '''
 
         for index, cell in enumerate(cell_list):
             self.cells[index] = self.cells[index].get_paramaterized_cell(directions[index])
