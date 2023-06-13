@@ -221,7 +221,7 @@ class Frame:
         # hyper parameters to tune for gradient descent
         moving_delta = 1
         delta = 1e-3
-        alpha = 0.1
+        alpha = 0.2
 
         cell_list = self.cells
         orig_cost = self.calculate_cost(self.synth_image_stack)
@@ -234,11 +234,9 @@ class Frame:
         # get gradient for each cell
         for index, cell in enumerate(cell_list):
             old_cell = deepcopy(cell)
-
         
             params = cell.get_cell_params().__dict__
             
-
             # get params that are changing
             if param_names is None:
                 param_names = list(params.keys())
@@ -258,11 +256,11 @@ class Frame:
         cells_grad = (np.array(cells_grad) - orig_cost) / delta
 
         # use this direction value if no line search
-        directions = {index:dict(zip(param_names, -1 * alpha * cells_grad[index])) for index, grad in enumerate(cells_grad)}
+        #directions = {index:dict(zip(param_names, -1 * alpha * cells_grad[index])) for index, grad in enumerate(cells_grad)}
         
         # find optimal distance to move for each perterb using line search
         # TODO: if using line search try to find best tolerance and upper bound
-        '''
+        
         for index, cell in enumerate(cell_list):
             
             param_gradients = dict(zip(param_names, cells_grad[index]))
@@ -304,7 +302,7 @@ class Frame:
                         upper = mid
                     
                 directions[index][param] = mid
-        '''
+        
 
         for index, cell in enumerate(cell_list):
             self.cells[index] = self.cells[index].get_paramaterized_cell(directions[index])

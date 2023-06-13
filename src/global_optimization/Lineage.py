@@ -74,7 +74,7 @@ class Lineage:
         total_iterations = len(frame) * self.config.simulation.iterations_per_cell
 
         # add tolerance (do not need to calculate gradient descent if minima is reaced)
-        tolerance = 0.1
+        tolerance = 0.5
         minima_reached = False
 
         for i in range(total_iterations):
